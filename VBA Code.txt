@@ -1,0 +1,148 @@
+'Kathleen Freeberg
+'VBA project 
+
+Sub WallStreet()
+
+'Declare Variables
+
+Dim R As Long
+Dim i As Long
+Dim StockName As String
+Dim StockTotalVolume As Double
+Dim LastRow  As Long
+Dim LastRowSum As Long
+Dim SummaryColumn As Long
+Dim YrOpen As Double
+Dim YrClose As Double
+Dim YrChange As Double
+Dim PercentChange As Double
+Dim ws As Worksheet
+Dim GrPerIncrease As Double
+Dim GrPerIncreaseTicker As String
+Dim GrPerDecrease As Double
+Dim GrPerDecreaseTicker As String
+Dim GrTotVol As Double
+Dim GrTotVolTicker As String
+
+
+
+For Each ws In Worksheets
+
+LastRow = ws.Cells(Rows.Count, 1).End(xlUp).Row 'Find Last Row in Data Set
+SummaryRow = 2 'Set the first row of the summary set
+
+
+'Format all Stock Summary Cells and Columns
+ws.Range("j2:J" & LastRow).NumberFormat = "0.00000000" 'Year Change Column
+ws.Range("K2:K" & LastRow).NumberFormat = "0.00%" 'Percent Change Column
+ws.Range("I1:L1").Font.Bold = True
+ws.Range("I1:L1").Borders(xlEdgeBottom).LineStyle = xlContinuous
+ws.Range("I1:L1").Borders(xlEdgeBottom).ColorIndex = 1
+ws.Range("I:L").ColumnWidth = 15
+ws.Range("I1:L1").HorizontalAlignment = xlCenter
+'Give Columns headers
+ws.Range("I1") = "Ticker"
+ws.Range("J1") = "Yearly Change"
+ws.Range("K1") = "Percent Change"
+ws.Range("L1") = "Total Stock Volume"
+
+
+'Format Greatest Increase/Decreae Summary Columns
+ws.Range("O1:P1").Font.Bold = True
+ws.Range("N2:N4").Font.Bold = True
+ws.Range("O1:P1").Borders(xlEdgeBottom).LineStyle = xlContinuous
+ws.Range("O1:P1").Borders(xlEdgeBottom).ColorIndex = 1
+ws.Range("N:N").ColumnWidth = 25
+ws.Range("O:P").ColumnWidth = 15
+ws.Range("O1:P1").HorizontalAlignment = xlCenter
+ws.Range("P2:P3").NumberFormat = "0.00%" 'Percent Change
+'Give Columns & Rows labels
+ws.Range("O1").Value = "Ticker"
+ws.Range("P1").Value = "Value"
+ws.Range("N2").Value = "Greatest % Increase: "
+ws.Range("N3").Value = "Greatest % Decrease: "
+ws.Range("N4").Value = "Greatest Total Volume:  "
+YrOpen = ws.Cells(2, 3).Value
+   
+   
+For R = 2 To LastRow
+
+    StockName = ws.Cells(R, 1).Value 'Set initial stock name
+
+    'Check to see if we are in the same stock, if not then do:
+           
+    If ws.Cells(R + 1, 1).Value <> ws.Cells(R, 1).Value Then
+        YrClose = ws.Cells(R, 6).Value
+        YrChange = YrClose - YrOpen
+        If YrOpen = 0 Then
+            PercentChange = 0
+            Else: PercentChange = YrChange / YrOpen
+        End If
+        
+        StockTotalVolume = StockTotalVolume + ws.Cells(R, 7).Value
+        YrOpen = ws.Cells(R + 1, 3).Value
+        
+        'Print out the summary
+        ws.Cells(SummaryRow, 9).Value = StockName 'Column I
+        ws.Cells(SummaryRow, 10).Value = YrChange 'Column J
+        ws.Cells(SummaryRow, 11).Value = PercentChange 'Column K
+        ws.Cells(SummaryRow, 12).Value = StockTotalVolume 'Column L
+        
+        'Color Code the yearly change
+        If PercentChange > 0 Then
+            ws.Cells(SummaryRow, 10).Interior.ColorIndex = 4
+            Else: ws.Cells(SummaryRow, 10).Interior.ColorIndex = 3
+         End If
+            
+        SummaryRow = SummaryRow + 1
+        StockTotalVolume = 0 'Reset StockTotalVolume
+          
+    Else  'If we are in the same set then add to the stock volume total
+        StockTotalVolume = StockTotalVolume + ws.Cells(R, 7).Value
+    End If
+ 
+ Next R
+ 
+'---------------------------------- Greatest % Increase, Decrease & Volume ----------------------------------
+
+LastRowSum = ws.Cells(Rows.Count, 9).End(xlUp).Row 'Find Last Row in New Data Set
+
+'Initialize the comparison variables
+
+GrPerIncrease = ws.Range("K2").Value
+GrPerDecrease = ws.Range("K2").Value
+GrTotVol = ws.Range("L2").Value
+
+For R = 2 To LastRowSum
+           
+        'Compare the stocks
+        If ws.Cells(R, 11).Value > GrPerIncrease Then
+            GrPerIncrease = ws.Cells(R, 11).Value
+            GrPerIncreaseTicker = ws.Cells(R, 9)
+        End If
+        
+        If ws.Cells(R, 11).Value < GrPerDecrease Then
+            GrPerDecrease = ws.Cells(R, 11).Value
+            GrPerDecreaseTicker = ws.Cells(R, 9).Value
+        End If
+        
+        If ws.Cells(R, 12).Value > GrTotVol Then
+            GrTotVol = ws.Cells(R, 12).Value
+            GrTotVolTicker = ws.Cells(R, 9).Value
+        End If
+        
+Next R
+
+'Print out results
+ws.Range("O2").Value = GrPerIncreaseTicker
+ws.Range("O3").Value = GrPerDecreaseTicker
+ws.Range("O4").Value = GrTotVolTicker
+ 
+ws.Range("P2").Value = GrPerIncrease
+ws.Range("P3").Value = GrPerDecrease
+ws.Range("P4").Value = GrTotVol
+    
+    
+Next ws
+
+End Sub
